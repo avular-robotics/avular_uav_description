@@ -1,0 +1,98 @@
+<?xml version='1.0'?>
+
+<!-- Description for the Avular Vertex One. -->
+<robot name="avular_vertex_one" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Per-robot link/joint prefix (empty = none). -->
+  <xacro:arg name="prefix" default=""/>
+  <xacro:property name="prefix" value="$(arg prefix)"/>
+  <xacro:property name="P" value="${prefix + ('_' if prefix else '')}"/>
+
+  <!-- Rotor link: identical inertial/collision for all four rotors; visual
+       orientation and prop mesh vary per rotor. -->
+  <xacro:macro name="rotor_link" params="name visual_rpy mesh">
+    <link name="${P}${name}">
+      <inertial>
+        <mass value="0.005"/>
+        <inertia ixx="9.75e-07" ixy="0.0" ixz="0.0" iyy="4.17041e-05" iyz="0.0" izz="4.26041e-05"/>
+      </inertial>
+      <collision name="${name}_collision">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.005" radius="0.1"/>
+        </geometry>
+      </collision>
+      <visual name="${name}_visual">
+        <origin xyz="0 0 0" rpy="${visual_rpy}"/>
+        <geometry>
+          <mesh filename="package://vertex_one_description/urdf/meshes/${mesh}"
+            scale="0.001 0.001 0.001" />
+        </geometry>
+      </visual>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="rotor_joint" params="name x y">
+    <joint type="continuous" name="${P}${name}_joint">
+      <origin xyz="${x} ${y} 0" rpy="0 0 0"/>
+      <child link="${P}${name}"/>
+      <parent link="${P}base_link"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="1000" velocity="1000"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="sensor_link" params="name">
+    <link name="${P}${name}">
+      <inertial>
+        <mass value="0.001"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="fixed_joint" params="name xyz">
+    <joint type="fixed" name="${P}${name}_joint">
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <child link="${P}${name}"/>
+      <parent link="${P}base_link"/>
+    </joint>
+  </xacro:macro>
+  <link name='${P}base_link'>
+    <inertial>
+      <mass value="1.5"/>
+      <inertia ixx="0.0347563" ixy="0.0" ixz="0.0" iyy="0.07" iyz="0.0" izz="0.0977"/>
+    </inertial>
+    <collision name='collision'>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.5 0.5 0.25"/>
+      </geometry>
+    </collision>
+    <visual name='visual'>
+      <origin xyz="0 0 0" rpy="-1.5707964 0 1.5707964"/>
+      <geometry>
+        <mesh filename="package://vertex_one_description/urdf/meshes/body.dae"
+          scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+  </link>
+
+  <xacro:rotor_link name="rotor_FL" visual_rpy="-1.5707964 0 0"         mesh="prop_l.dae"/>
+  <xacro:rotor_link name="rotor_FR" visual_rpy="-1.5707964 0 3.1415926" mesh="prop_r.dae"/>
+  <xacro:rotor_link name="rotor_RL" visual_rpy="-1.5707964 0 1.570796"  mesh="prop_l.dae"/>
+  <xacro:rotor_link name="rotor_RR" visual_rpy="-1.5707964 0 3.1415926" mesh="prop_l.dae"/>
+
+  <xacro:sensor_link name="imu_link"/>
+  <xacro:sensor_link name="gnss_link"/>
+
+  <!-- Symmetric X-quad layout -->
+  <xacro:rotor_joint name="rotor_FL" x="0.20613"  y="0.20047"/>
+  <xacro:rotor_joint name="rotor_FR" x="0.20613"  y="-0.20047"/>
+  <xacro:rotor_joint name="rotor_RL" x="-0.20613" y="0.20047"/>
+  <xacro:rotor_joint name="rotor_RR" x="-0.20613" y="-0.20047"/>
+
+  <xacro:fixed_joint name="imu_link"  xyz="0 0 0"/>
+  <xacro:fixed_joint name="gnss_link" xyz="-0.17 0.22 0"/>
+
+</robot>
